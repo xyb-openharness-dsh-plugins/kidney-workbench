@@ -1,56 +1,82 @@
-# 数据主体—关系—表
+# 数据主体—关系—表 · 肾癌 v0.1
 
-| 实体 | 稳定 ID | 主体/外键 | 核心字段/类型 | 约束/索引 | 来源/确认 | 生命周期 |
-| --- | --- | --- | --- | --- | --- | --- |
-| subject | ... | ... | ... | ... | ... | ... |
-| document | ... | subject | relative_path/hash/mime | ... | original | ... |
-| observation | ... | subject/metric_definition | time/value/unit | ... | candidate/confirmed | ... |
-| artifact | ... | task/snapshot | relative_path/hash/format | ... | template version | ... |
+日期：2026-10-24。权威文件：`schema/0001_initial.sql`（结构，sha256 见 `schema/freeze-contract.md`）+ 本文件（语义与边界）。
+**改结构只能新增 `0002_*.sql`**；本文件随结构变更同步。
 
-实体图：...
-扩展策略：定义目录新增 vs 结构迁移的边界；核心关系不塞入任意 JSON。
-迁移 ledger/旧库 fixture/备份/事务/回滚兼容：...
-数据根选择、相对路径校验、公共数据和私人数据分离：...
-统一读模型与跨页一致性验收：...
+## 1. 表清单（21 张）
 
-## 持久化与记忆选型（互动确认）
+### 1.1 家族通用（8）
 
-等级 A/B/C/D 与理由：...
-预计规模/增长、常用查询、并发写入者、离线要求：...
-SQLite 或 JSON 的实际运行条件与备选方案：...
+| 表 | 记什么 | 边界 |
+| --- | --- | --- |
+| `subjects` | 档案头（姓名/性别/年龄/一句话/路径/心态）+ 每节标题列 | 一节一个 `*_title` 列，缺列 `check:columns` 会红 |
+| `metrics` | 指标字典（名称/单位/类/色/小数位/kind/参考区间 band_low·band_high） | 参考区间可空；**缺上限时分级返回 needsUln，不借通用上限** |
+| `metric_points` | 指标数值点（v_num / v_text 二选一，缺值 NULL） | NULL ≠ 0 ≠ 「阴性」；复合主键裸 SELECT 必须 `ORDER BY rowid` |
+| `events` | 事件轴（确诊/手术/方案开始…） | 无 ord 列，按 rowid；只画竖虚线，不做判读 |
+| `rhythm` | 随访与监测节奏的**引用原文** + 参考节点 | 节点=起点+k×间隔；不发提醒、不排计划 |
+| `cycles` | 治疗周期（IO 输注/TKI 周期起止） | 日期骨架，不是疗效判定 |
+| `viewpoints` | 看法（原话） | **全表无 is_conclusion 列**（契约①） |
+| `trials` | 试验登记摘录 | 登记 ≠ 有效 ≠ 可入组；页面带免责 |
 
-| 数据类别 | 权威位置/格式 | 读写责任 | 来源/revision | 索引/失效/保留规则 |
-| --- | --- | --- | --- | --- |
-| 已确认业务事实 | ... | ... | ... | ... |
-| 文件与产物 | ... | ... | ... | ... |
-| 偏好/摘要/检索记忆（可选） | ... | ... | ... | ... |
-| 可重建内存缓存/派生索引 | ... | ... | ... | ... |
+### 1.2 事实四层（3）
 
-同步：提交后更新、幂等键、重试、积压可见性：...
-检索：主体/工作区过滤、来源核对、过期与冲突处理：...
-纠正/删除：缓存与记忆失效、删除传播：...
-外部记忆的实际 API/版本/部署/发送范围；不可用时的本地路径：...
-性能证据：代表数据、查询延迟/启动、内存测量与目标：...
-确认人/日期、未决项及对应验收 ID：...
+| 表 | 层 | 边界 |
+| --- | --- | --- |
+| `documents` | 原件 | 导入的文件；sha256/rel_path 等列 0002 再补（MinerU 链路 M6+） |
+| `candidate_fields` | 候选 | 解析待核对；**不许并进 metric_points**（契约④） |
+| `demo_meta` | 演示元信息 | 只 demo 用 |
 
-## 前端与业务流程变化矩阵（建库前必填）
+### 1.3 肾癌专属（10）
 
-领域事实/关系、工作流定义与实例、页面读模型/偏好边界：...
-稳定ID/revision、流程定义版本/已有实例、状态转换与跳过/重开/取消语义：...
+| 表 | 记什么 | 场景 | 关键边界 |
+| --- | --- | --- | --- |
+| `pathology_rows` | 病理条目（分型/分级/肉瘤样/切缘/坏死） | S01/S02 | kind='row'/'gap' 两态；未检测写「未检测」不写「阴性」 |
+| `staging_rows` | TNM 分期原文 | S03 | 无分期计算列；「分期」字样不用于分型语境 |
+| `surgery_rows` | 手术方式+日期+机构 | S05 | kind 六选一；无术式优劣字段 |
+| `contra_rows` | 对侧肾/孤立肾/CKD 原文 | S07 | 「未记录」与「正常」必须可分（契约②） |
+| `as_rows` | AS 影像（日期/方式/大小原文） | S08 | **无 size_delta / growth 列**——不算生长速度 |
+| `lines_rows` | 治疗线序（线别/方案/起止） | S10 | 换方案=新增行（契约③）；无方案优劣字段 |
+| `imdc_rows` | IMDC 分层原文（医生判定） | S11 | **无 score 列**——产品不打分；六项标准原文并列 |
+| `symptom_rows` | 副作用症状+照抄的 CTCAE 原文 | S13 | 列名 ctcae_text 不叫 grade；与同日化验并置不并轴 |
+| `genetics_rows` | 遗传与家系成员检测状态 | S04 | private 默认 1；导出白名单不含本表 |
+| `question_rows` | 就诊问题+医生回答原文 | S09/S13 | 产品不生成答案；这是「问医生」出口的落点 |
 
-| 变化情境 | 不变的事实/关系 | 配置/投影/API变化 | 迁移/旧记录读取与恢复 | 验收证据 |
-| --- | --- | --- | --- | --- |
-| 改导航/布局/同一事实多视图 | ... | ... | ... | ... |
-| 新字段/指标/可选记录类型 | ... | ... | ... | ... |
-| 步骤插入/跳过/重开/并行 | ... | ... | ... | ... |
-| 来源更正/删除/摘要与缓存失效 | ... | ... | ... | ... |
-| 旧数据库/旧API客户端升级 | ... | ... | ... | ... |
+## 2. 关系
 
-不把UI模拟数据当表，不为每个步骤复制事实；不通过无限JSON、重置库或无理由的全量事件溯源代替设计。详见docs/14-HTML-AND-DATA-CONTRACT.md。
+```
+subjects 1─n metric_points / events / rhythm / cycles / viewpoints
+subjects 1─n pathology_rows / staging_rows / surgery_rows / contra_rows
+subjects 1─n as_rows / lines_rows / imdc_rows / symptom_rows / genetics_rows / question_rows
+subjects 1─n documents / candidate_fields / trials(demo) / demo_meta(demo)
+metrics   (profile_key, key) ── metric_points.metric_key    # 复合主键，注意 ORDER BY rowid
+```
 
+## 3. 四契约验收（逐条可验）
 
-## UI/流程变化的承受能力（必填）
+| 契约 | 落点 | 怎么验 |
+| --- | --- | --- |
+| ① 看法恒不为结论 | `viewpoints` 无 `is_conclusion` 列 | `grep is_conclusion schema/` 为空 |
+| ② 空 ≠ 阴性 | `metric_points.v_num` NULL；`genetics_rows.status`='na'；`as_rows.size_text` 可空 | 单测：留空存 NULL、明确「没有」存「没有」，两者可区分 |
+| ③ 更正只新增版本 | `as_rows` / `lines_rows` 只 INSERT | 单测：同日两条并存，ord 递增 |
+| ④ 事实四层不合并 | documents / candidate_fields / metric_points / events 四张独立表 | 候选表的行数不进 metric_points（导出/读模型断言） |
 
-领域实体/证据/主体/状态/版本是稳定核心；UI通过命令用例写入和版本化读模型读取。不能按Tab复制事实或把整页state当业务存储。列出：页面拆合/移位、流程先后改变、新增普通指标、来源更正、候选→接受、未知字段/枚举、隐私派生与快照失效时需要改哪层、是否迁移、兼容/恢复方式。
+## 4. ×ULN 与分级契约
 
-HTML确认前是候选模型/模拟adapter，确认对应模块后复核并落实生产schema/API；仅布局/字段顺序变化不能迫使用户清库。JSON扩展有类型/schema/version/上限，核心关系保留外键与约束；写入有revision/幂等/事务。记录真实迁移/并发/故障证据，未执行标未验证。
+- `metrics.band_low/band_high` 存**化验单自带**的参考区间，可空；
+- 缺上限 → `needsUln`（界面虚线徽章「需参考上限」），**不借成人通用上限**；
+- 单位不对 → `needsUnit`（「请按毫秒填写」式提示），不替用户换算；
+- 三种「没有级别」界面可区分：正常（无徽章）/ 缺上限（虚线徽章）/ 单位待确认（虚线徽章）。
+- **首版（G1 范围）只做「对照」不做「分级」**：CTCAE 分级模块（dsh/ctcae.js）列入 M6+，
+  阈值表以 `assets/reference/ctcae/` 的 PDF 为准，冲突时改代码（starter docs/23）。
+
+## 5. 演示数据（唯一来源）
+
+`demo/build-demo-data.mjs` 同时产出 `demo/demo-data.sqlite` 与 `prototypes/v0.2/demo-data.js`；
+被 import 时只返回 `buildDemoProfiles()` 纯数据，不碰磁盘。2 档案 × 6 个月窗口。
+`npm run check:columns` 执行本迁移后与 js 逐列比对。
+
+## 6. 隐私与导出（M6 落地，先记边界）
+
+- `genetics_rows.private` 默认 1；导出白名单不含本表、不含 `viewpoints`（照 attr/家族做法，
+  私密层「按构造排除」而不是「读了再过滤」）。
+- 资料目录由用户显式选定；主目录/桌面/下载根目录一律拒绝，不替用户猜。
