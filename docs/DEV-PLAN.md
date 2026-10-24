@@ -13,8 +13,33 @@
 | M5 | 独立评审（DESIGN-REVIEW） | 13 项检验单；P0=0 | ✅ 本轮（修订记录见 DESIGN-REVIEW §六） |
 | **G1** | **交第一次确认，停下等签认** | 用户原话留痕 SIGNOFF | ✅ 2026-10-25（原话「确认G1 ok，继续后续开发」，签认范围见下节） |
 | M6 | 开发版移植（dsh 六件 + public + 检查链） | `npm run check` 全绿 + parity | ✅ 2026-10-25（v0.3.0；见下节） |
-| M7 | 装机验证（V2/V3） | 宿主信号 + 真机闭环 | ⏳ 未授权 |
-| M8 | 建私有仓 + push + BACKLOG 回流 | remote SSH；组织四件套同步 | ⏳ 未授权 |
+| M7 | 装机验证（V2/V3） | 宿主信号 + 真机闭环 | 🔶 包级已装（v0.3.0，2026-10-25；V2/V3 真机走查待用户） |
+| M8 | 建私有仓 + push + BACKLOG 回流 | remote SSH；组织四件套同步 | ✅ 2026-10-25（见下节） |
+
+## M7 / M8 落地记录（2026-10-25）
+
+**M7 装机（包级已装）**
+
+- 包：`xyb-community-kidney-workbench-0.3.0.tgz`（35 文件，含 public/、dsh/、lib/、src/、schema/、assets/）。
+- 装进 `~/Library/Application Support/dsh-desktop/harness/profiles/web`（**不是** `~/.dsh/profiles/*`）；
+  改前先备份 `package.json` / `pnpm-lock.yaml`（`.bak-kidney-workbench-0.3.0-HHMMSS`）。
+- `NODE_OPTIONS= npx pnpm@10.15.0 --dir <profile> add -w <abs tgz>` → dependencies 已列；
+  包名写进该 profile 的 `dsh.profile.bundles`（32 条）。
+- 校验：装机副本 `lib/client.js` 占位符残留 **0**；`npm run check:install` 通过（判定基准识别到
+  Desktop 实际加载的 profile；提示"无市场安装记录"属手工安装的预期提示）。
+- **V2/V3 真机走查待用户**：宿主进程在装包之前就启动了，`desktop-workbenches/state.json` 里还没有
+  kidney——需要用户在 Desktop 里启用工作台并重开应用。真机要看三件事：顶栏 AI 按钮在不在、
+  分栏能不能拖、业务区是不是 /api/kidney/ui/。
+
+**M8 建仓 + push + 回流**
+
+- `gh repo create xyb-openharness-dsh-plugins/kidney-workbench --private`；
+  origin 直接用 **SSH**（`git@github.com:...`）——https push 在本机常被沙箱代理拦（家族已知问题）。
+  `main` 已推送 5 个提交（M0 → M1+M2 → M3+M4 → M5 → M6）。
+- 组织 `xyb-openharness-dsh-plugins/.github` 的 `BACKLOG.md` 三处同步（commit `cd1612a`）：
+  概览表肾癌一行（🟡 v0.1.0 本地脚手架 → 🔵 v0.3.0 包级装机）、主要癌种表 #36、
+  统计句「远端仓已建 21 个」。
+- Issue #20 留进展评论（G1 签认 / M6 完成 / 包级装机 / 还缺什么）。
 
 ## M6 落地记录（2026-10-25 · v0.3.0）
 
