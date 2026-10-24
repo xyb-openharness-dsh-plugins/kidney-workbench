@@ -185,6 +185,32 @@ try {
   if (out.chart.categoryNotLinked.after !== out.chart.categoryNotLinked.expected
     || out.chart.categoryNotLinked.hfsrDots !== 0) out.chart.err = '分类指标被连线了（契约违反）';
 
+  /* ── 单点序列断言（SCENARIOS 一图秀断言：单点写「只有 1 次记录，暂不连线」） ── */
+  const singleCheck = await cdp.eval(`(() => {
+    state.profile = 'B';
+    state.sel = ['tsh'];
+    render();
+    const svg = document.querySelector('#main .chart-wrap svg.chart');
+    if (!svg) return JSON.stringify({ err: '单点 svg 缺失' });
+    return JSON.stringify({
+      note: svg.textContent.includes('只有 1 次记录，暂不连线'),
+      dots: svg.querySelectorAll('circle.pt').length,
+      lines: svg.querySelectorAll('path.line').length
+    });
+  })()`);
+  out.chart.single = JSON.parse(singleCheck);
+  /* 卡背迷你折线同款断言：翻 tsh 卡，背面 sparkline 也要写这句话 */
+  await goto('labs', '指标卡');
+  const sparkSingle = await cdp.eval(`(() => {
+    const card = document.querySelector('#main .mcard[data-mcard="tsh"]');
+    if (!card) return JSON.stringify({ err: 'tsh 卡缺失' });
+    card.click();
+    const back = card.querySelector('[data-face="back"]');
+    return JSON.stringify({ flipped: card.dataset.flipped, note: back ? back.textContent.includes('只有 1 次记录，暂不连线') : false });
+  })()`);
+  out.chart.sparkSingle = JSON.parse(sparkSingle);
+  await cdp.eval(`(() => { state.profile = 'A'; state.sel = ['cr', 'hgb', 'bp_sys']; render(); })()`);
+
   /* ── 指标卡 3D 翻转 ── */
   await goto('dashboard', '');
   out.flip = await cdp.eval(`(() => {
@@ -270,6 +296,8 @@ const ok = !out.fatal && out.jsErrors === 0 && badResponses.length === 0
   && out.tabs === 70 && out.navButtons === 11
   && out.chart.series === 3 && out.chart.pts > 0 && out.chart.endLabels === 3
   && out.chart.watermark === true && out.chart.dashStopsAtCY0minus10 === true
+  && out.chart.single && out.chart.single.note === true && out.chart.single.dots === 1 && out.chart.single.lines === 0
+  && out.chart.sparkSingle && out.chart.sparkSingle.flipped === 'true' && out.chart.sparkSingle.note === true
   && !out.chart.err && out.flip.after === 'true' && out.flip.before === 'false'
   && out.profileSwitch.switched && out.profileSwitch.emptyHonest
   && out.agent.open === true && out.agent.closed === true && out.agent.promptHasBrand && out.agent.promptHasBoundary

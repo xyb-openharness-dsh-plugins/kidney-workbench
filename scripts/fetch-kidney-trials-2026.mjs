@@ -12,8 +12,8 @@
  *   statuses[]: { sourceId, state, reasonCode?, explanation?, coverage?, freshness? }
  *
  * 用法：
- *   node scripts/fetch-thyroid-trials-2026.mjs --dry-run
- *   node scripts/fetch-thyroid-trials-2026.mjs
+ *   node scripts/fetch-kidney-trials-2026.mjs --dry-run
+ *   node scripts/fetch-kidney-trials-2026.mjs
  */
 
 import { spawn } from 'node:child_process';
@@ -235,7 +235,7 @@ async function main() {
     files: {},
   };
   manifest.files['trials-2026.jsonl'] = { sha256: sha256(jsonlPath) };
-  manifest.files['thyroid_cancer_trials_2026.sqlite'] = { sha256: sha256(dbPath) };
+  manifest.files['kidney_cancer_trials_2026.sqlite'] = { sha256: sha256(dbPath) };
   writeFileSync(join(OUT_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2));
   if (manifest.recordCount !== lines.length || dbCount !== lines.length) {
     console.error(`一致性断言失败：manifest=${manifest.recordCount} jsonl=${lines.length} sqlite=${dbCount}`);

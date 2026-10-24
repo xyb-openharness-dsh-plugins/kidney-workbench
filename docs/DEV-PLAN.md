@@ -10,8 +10,8 @@
 | M2 | schema 0001 设计 + freeze-contract | 四契约落地；`check:schema` 过；sha256 入合同 | ▶ |
 | M3 | 临床试验采集（在线通道）+ CLINICAL-DATA-2026 | 三处条数一致；逐来源终态 | ▶ |
 | M4 | 演示数据 + HTML demo（prototypes/v0.2） | 四必查件 + 窄宽 probe 0 问题 | ✅ 本轮 |
-| M5 | 独立评审（DESIGN-REVIEW） | 13 项检验单；P0=0 | ⏳ |
-| **G1** | **交第一次确认，停下等签认** | 用户原话留痕 SIGNOFF | ⏳ |
+| M5 | 独立评审（DESIGN-REVIEW） | 13 项检验单；P0=0 | ✅ 本轮（修订记录见 DESIGN-REVIEW §六） |
+| **G1** | **交第一次确认，停下等签认** | 用户原话留痕 SIGNOFF | ⏳ 待用户 |
 | M6 | 开发版移植（dsh 七件 + public + 检查链） | `npm run check` 全绿 + parity | ⏳ 未授权 |
 | M7 | 装机验证（V2/V3） | 宿主信号 + 真机闭环 | ⏳ 未授权 |
 | M8 | 建私有仓 + push + BACKLOG 回流 | remote SSH；组织四件套同步 | ⏳ 未授权 |
@@ -26,6 +26,9 @@ demo 打开方式（file:// 路径）/ 关键页截图 / DIFF-MATRIX 三行摘�
 1. 无访谈——场景全假设，G1 拍的是「范围」不是「需求已核实」。
 2. CSCO 2025 只有公开摘录——出处卡只能到小节，页码待核。
 3. 中国获批药物清单未逐条核——界面出现的每个药名都要标「获批状态未核实」。
+   **2026-10-24 已落地**：`prototypes/v0.2/app.js` 治疗线序卡与用药周期表下方各加一条获批状态未核实说明
+   （点名本档案演示用药帕博利珠单抗、阿昔替尼），文案写「以医嘱与药品说明书为准」，不写任何获批结论。
+   临床研究页的试验标题里的药名属于登记原文摘录，与该风险无关（登记 ≠ 获批）。
 4. 泌尿族两仓都是 🟡 脚手架，没有可直接继承的家族基线文件——schema 参照 gastric（消化样板）。
 
 ## M4 落地记录（2026-10-24）
@@ -44,3 +47,31 @@ demo 打开方式（file:// 路径）/ 关键页截图 / DIFF-MATRIX 三行摘�
   窄屏顶栏操作区按 max-content 撑到 388px、body 横向溢出 4px。media 查询里补 `flex:0 1 auto;min-width:0`（样式表内有注释）。
   此 bug 大概率同存于 gastric / thyroid 等仓，建议回流时同步。
 - 截图 10 张在 `docs/shots/`（G1 与 README 用）。
+
+## M5 独立评审与修订记录（2026-10-24）
+
+- 独立子代理评审（与主线隔离）：13 项检验单 **P0=0 / P1=3 / P2=9**，总体判断「修订后签」。
+  报告全文 + 逐条处理证据见 `docs/DESIGN-REVIEW.md` §三（问题清单）与 §六（修订记录）。
+- 修订批次全链复跑结果（退出码全 0）：`demo:data`（25 指标 / 95 数据点 / 10 试验）→
+  `check:schema` ✓ → `check:demo` ✓（21 表 / 158 列）→ `probe:proto` ok=true
+  （70 页签 / 0 禁词 / 0 溢出 / 单点断言过 / 10 截图）→ `npm run check` ✓（2 条 starter warnings 同前）。
+- **`npm run audit` 22/30 通过 · 8 失败（已知，M6 结构件，G1 范围外）**：`lib/version.js`、`lib/layout.js`、
+  `customFrame:true`、检查链缺单测/版本一致/schema/文案红线四项、`test/` 无用例。
+  按 README 纪律「新项目 audit 必然有 fail，那是待办清单」——这 8 条即 M6 第一周待办，
+  交付/装机前必须清零。**不在 G1 前补**：补了就等于把 M6 的活提前干，且 G1 可能改变页面范围。
+- 家族回流建议（本轮发现，记入LESSONS 或回流清单）：① `.top-actions` 窄宽 bug（见 M4 记录）；
+  ② fork 清理时注意采集脚本的 manifest 条目名（thyroid→kidney 教训：错名只在重跑时才写进 manifest，
+  静态检查发现不了，要靠 hash 与实文件比对）。
+
+## 阶段 1.6 交付物清单（G1 材料包）
+
+| 材料 | 位置 |
+| --- | --- |
+| demo 打开方式 | README「打开演示」（file:// 直开，无需服务） |
+| 关键页截图 | `docs/shots/` 10 张 |
+| 差异化三行摘要 | DIFF-MATRIX §一 6 条种子 + §三 刻意不同 5 条 |
+| 采集覆盖与缺口 | CLINICAL-DATA-2026 §2 终态表 + §3 五条缺口（含 721 宽检索分层） |
+| 指南三层 | G1 出处 ✅（机构+版本+小节）/ G2 节奏 ⏸（CSCO §7 原文引用，demo 已用）/ G3 分级 ❌ 首版不做 |
+| 明确未做清单 | DEV-REQUIREMENTS §四 8 条 + README「明确未做」 |
+| 待拍板范围问题 | DIFF-MATRIX §四 决策点 1–8（7/8 为 M4 新增两条） |
+| 评审与修订证据 | DESIGN-REVIEW 全文 + §六 修订记录 |

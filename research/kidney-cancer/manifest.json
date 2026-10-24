@@ -50,7 +50,7 @@
     "trials-2026.jsonl": {
       "sha256": "8830ded3720e3ca86e622fca32bcd7e4c9b2c4c69023add193ed2605cd1595c4"
     },
-    "thyroid_cancer_trials_2026.sqlite": {
+    "kidney_cancer_trials_2026.sqlite": {
       "sha256": "97307baf9a0b43c8437dfaa273dabc119cc1d600402a57ab6ddffcf488e473bd"
     }
   }

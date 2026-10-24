@@ -12,7 +12,7 @@
    - 一图秀事件竖虚线上端止于 CY0-10（DEV-REQUIREMENTS 硬约束 23）。 */
 
 const APP_INFO = {
-  version: '0.1.0',
+  version: '0.2.0',
   build: '2026-10-24',
   channel: 'prototype',
   channelLabel: '交互原型 · 未接入 DSH'
@@ -131,6 +131,14 @@ const delta = (m) => {
 };
 function sparkline(m, w = 200, h = 44) {
   const pts = (m.points || []).filter(p => typeof p.v === 'number');
+  /* 单点：不画线，写明「只有 1 次记录，暂不连线」——两点成线、一点不成趋势，
+     画线会让人读出「在升 / 在降」，那是判断不是记录（SCENARIOS 一图秀断言）。 */
+  if (pts.length === 1) {
+    const y = h / 2 - 2;
+    return `<svg class="spark" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(m.name)}：只有 1 次记录，暂不连线">
+      <path class="base" d="M4 ${h - 5}H${w - 4}"/><circle cx="${w / 2}" cy="${y}" r="3.2" fill="${m.color}"/>
+      <text x="${w / 2}" y="${y + 17}" text-anchor="middle" font-size="10" fill="#8fa1b5">只有 1 次记录，暂不连线</text></svg>`;
+  }
   if (pts.length < 2) return '';
   const vs = pts.map(p => p.v);
   let lo = Math.min(...vs), hi = Math.max(...vs); if (hi === lo) { hi += 1; lo -= 1; }
@@ -341,7 +349,11 @@ function chartSVG(t0, t1, codes) {
     const lx = nearRight ? lp.x - 8 : lp.x + 8;
     const label = state.toggles.keypoints
       ? `<text class="delta-tag" x="${lx.toFixed(1)}" y="${(lp.ly + 4).toFixed(1)}" text-anchor="${nearRight ? 'end' : 'start'}" fill="${s.m.color}">${fmtNum(lp.v, s.m.dec)}</text>` : '';
-    return `<g>${path}${points}${label}</g>`;
+    /* 单点序列：写「只有 1 次记录，暂不连线」而不是画一条一个点的线（SCENARIOS 一图秀断言）。
+       位置避开末点数值标签（数值在 ly+4，注记在下 18px）。 */
+    const single = s.pts.length === 1
+      ? `<text x="${(nearRight ? lp.x - 10 : lp.x + 10).toFixed(1)}" y="${(lp.ly + 20).toFixed(1)}" text-anchor="${nearRight ? 'end' : 'start'}" font-size="9.5" fill="#8fa1b5">只有 1 次记录，暂不连线</text>` : '';
+    return `<g>${path}${points}${label}${single}</g>`;
   }).join('');
 
   const ticks = monthTicks(t0, t1).map((t) => `<line class="axis" x1="${t.x.toFixed(1)}" x2="${t.x.toFixed(1)}" y1="${CY1}" y2="${CY1 + 5}"/><text class="tick" x="${t.x.toFixed(1)}" y="${CY1 + 18}" text-anchor="middle">${t.label}</text>`).join('');
@@ -515,7 +527,8 @@ function vTreatment() {
       `${esc(l[2])}<br>起：${esc(l[3])}${l[4] ? ` · 止：${esc(l[4])}` : ' · 止：—'}`,
       `<div style="text-align:right">${pill(l[5], l[5] === '进行中' ? 'green' : 'grey')}<small style="display:block;margin-top:4px">${esc(l[6])}</small></div>`)).join('')
       : `<div class="empty" style="margin-top:0"><h3>本档案暂无系统治疗记录</h3><p>本档案走主动监测路径，没有用过靶向 / 免疫方案；如后续开始系统治疗，每一线按医嘱原文新增一行。</p></div>`}
-    <p class="small-note">线序来自医嘱与出院小结原件；换线、调药以医生决定为准，工作台只做记录，不比较方案优劣。</p></div>`;
+    <p class="small-note">线序来自医嘱与出院小结原件；换线、调药以医生决定为准，工作台只做记录，不比较方案优劣。</p>
+    <p class="small-note">界面出现的药名（本档案演示方案：帕博利珠单抗、阿昔替尼）均为演示数据，<b>各药在中国肾癌适应症的获批状态未逐条核实</b>（DEV-PLAN 已知风险 3）——是否获批、是否在适应症内、怎么用，以医嘱与药品说明书为准。</p></div>`;
   const imdc = `<div class="section-title"><h2>${esc(p.titles.imdc || '危险度分层（医生判定）')}</h2><span class="source-link">产品不打分</span></div>
     <div class="card">${p.imdc.length ? p.imdc.map(im => `<div class="row"><div class="row-main"><div><b>${esc(im[0])} · ${esc(im[1])}</b><p>${esc(im[2])}</p></div></div>
       <div style="text-align:right">${pill('医生判定', 'green')}<small style="display:block;margin-top:4px">${esc(im[3])}</small><small style="display:block">${esc(im[4])}</small></div></div>`).join('') : `<div class="empty" style="margin-top:0"><h3>本档案暂无危险度分层记录</h3><p>晚期开始系统治疗时，医生会按 IMDC 六项判定分层；本台只记录医生给出的结论原文。</p></div>`}
@@ -544,7 +557,8 @@ function vTox() {
     <div class="card"><div class="card-head"><h2>周期记录</h2><span class="source-link">来自输液记录与医嘱</span></div>
     <div class="table-wrap"><table class="cycle-table"><thead><tr><th>周期</th><th>日期</th><th>用药</th><th>状态</th></tr></thead><tbody>
     ${p.cycles.map(c => `<tr class="${c[4] ? 'done' : 'next'}"><td><b>${esc(c[0])}</b></td><td class="num">${esc(c[1])}</td><td>${esc(c[2])}</td><td>${pill(c[3], c[4] ? 'green' : 'violet')}</td></tr>`).join('')}</tbody></table></div>
-    <p class="small-note">已完成 ${done} / ${p.cycles.length} 个周期（按记录）；周期记录来自出院小结与输液记录原件，更正只新增版本。</p></div>`
+    <p class="small-note">已完成 ${done} / ${p.cycles.length} 个周期（按记录）；周期记录来自出院小结与输液记录原件，更正只新增版本。</p>
+    <p class="small-note">界面出现的药名均为演示数据，<b>各药在中国肾癌适应症的获批状态未逐条核实</b>（DEV-PLAN 已知风险 3）——是否获批、是否在适应症内、怎么用，以医嘱与药品说明书为准。</p></div>`
     : `<div class="empty"><h3>本档案暂无用药记录</h3><p>本档案走主动监测路径，没有系统治疗用药；后续开始的方案会按医嘱原文记在这里。</p></div>`;
   const toxCards = ['hfsr', 'fatigue', 'diarrhea'].filter(k => m[k]).map(k => mcard(k, m[k])).join('');
   const symptoms = `<div class="section-title"><h2>${esc(p.titles.tox || '副作用与症状')}</h2><span class="source-link">只记原话 · 不分级</span></div>
@@ -642,6 +656,11 @@ function vImaging() {
   const timeline = `<div class="section-title"><h2>影像时间轴</h2><span class="source-link">只记日期与名称</span></div>
     <div class="card">${imagingEvents.length ? imagingEvents.map(e => row(`<b>${esc(e.d)}</b>`, esc(e.label))).join('') : '<p>本档案暂无影像事件。</p>'}
     <p class="small-note">工作台<b>不解读影像</b>：影像结论以报告原文为准，时间轴只回答「什么时候做过什么」。AS 路径的影像大小在「主动监测」页按原文并列。</p></div>
+    <div class="card"><div class="card-head"><h2>报告里可能出现的词 · Bosniak 分级</h2><span class="source-link">解释卡 · 不是判读工具</span></div>
+      ${row('<b>它是什么</b>', '对肾囊性肿块的影像分类，按 CT/MRI 上的表现分 I–IV 类；常用于「这个囊肿要不要紧」的影像描述语境。')}
+      ${row('<b>出处</b>', 'Bosniak 分级：1986 年首版（Bosniak MA, Radiology），2019 年更新版覆盖 CT 与 MRI。机构与版本已注明，**页码待核**（中文指南原件未取得，见 DEV-PLAN 风险 2）。')}
+      ${row('<b>工作台怎么用它</b>', '只解释、不判读：报告原文写了类别就照抄留档，没写就不补、不猜、不按影像描述自行归类——分类是影像科与临床医生的事。')}
+      <p class="small-note">这张卡是「遇到不懂的词时查一下」的解释位（第②层：指标是什么、检查查什么）；「我的囊肿是几类、要不要处理」属第③层判断，出口只有「这一句需要问你的医生」。</p></div>
     <div class="card"><div class="card-head"><h2>影像报告（资料库中的影像类）</h2><span class="source-link">${imagingDocs.length} 份</span></div>
     ${imagingDocs.length ? imagingDocs.map(d => row(`<b>${esc(d.name)}</b>`, `${esc(d.date)} · ${esc(d.status)}`, `<button class="source-link" data-action="source" data-doc="${esc(d.id)}">原文</button>`)).join('') : '<p>暂无影像类材料。</p>'}</div>`;
   const reports = `<div class="section-title"><h2>报告原文</h2><span class="source-link">原件不丢 · 可点回来源</span></div>
@@ -718,7 +737,7 @@ function vTrials() {
     <p>${esc(t.phase)} · ${esc(t.status)} · 申办：${esc(t.sponsor)}</p>
     <small>NCT ${esc(t.id)} · <a href="${t.url}" target="_blank" rel="noopener">登记页原文 ↗</a></small>
     <div class="actions" style="margin-top:8px">${pill('登记摘录 · 状态未核实', 'yellow')}<button class="soft" data-action="save-trial" data-id="${t.id}">${saved.has(t.id) ? '已收藏 ✓' : '收藏'}</button><button class="text-button" data-action="ask-trial" data-id="${t.id}">加入入组问题</button></div></div>`;
-  const notice = `<div class="notice plain"><b>这是 2026-10-24 采集的肾癌相关临床试验登记摘录</b>（CDE 363 条 + CTV 358 条，共 721 条；演示选 10 条。ChiCTR 在线与 ICTRP 两个通道本轮采集失败，未计入，覆盖未知）。登记状态不等于入组资格；线索不排序、不推荐、不预测获益；入组资格以研究中心答复为准。</div>`;
+  const notice = `<div class="notice plain"><b>这是 2026-10-24 采集的临床试验登记摘录</b>（CDE 363 条 + CTV 358 条，共 721 条；演示选 10 条）。检索式是 8 个肾癌关键词的宽口径检索：721 条里<b>标题明确含肾癌 / RCC 表述的只有 68 条</b>，其余为宽检索带入的生物等效性研究（149 条）、肾功能 / 肾病 / 移植 / 尿路上皮等非肾癌表述（31 条）与实体瘤早期试验等（473 条）——登记记录只有标题级字段，无法逐条判定适应症，故不剔除、原样保留并如实说明。演示选出的 10 条均在这 68 条内。ChiCTR 在线与 ICTRP 两个通道本轮采集失败，未计入，覆盖未知。登记状态不等于入组资格；线索不排序、不推荐、不预测获益；入组资格以研究中心答复为准。</div>`;
   const toolbar = `<div class="toolbar"><div class="chips"><button class="chip" aria-pressed="true">全部 ${TRIALS.length}</button><button class="chip" aria-pressed="false">晚期一线</button><button class="chip" aria-pressed="false">辅助 / 局限</button></div>
     <input type="search" placeholder="搜索标题 / NCT 号（原型内不生效）" aria-label="搜索"></div>`;
   const bodies = [
@@ -840,7 +859,7 @@ function ingestFiles(fileList) {
 const VIEWS = { dashboard: vDashboard, tumor: vTumor, renal: vRenal, monitor: vMonitor, treatment: vTreatment, tox: vTox, labs: vLabs, imaging: vImaging, review: vReview, life: vLife, trials: vTrials };
 
 /* ---------------- agent dock（dsh 原生会话挂载位） ---------------- */
-const FORBIDDEN = ['建议治疗', '可能复发', '预后良好', '治愈率', '可以停药', '无需就医', '推荐方案', '生存率'];
+const FORBIDDEN = ['建议治疗', '可能复发', '预后良好', '治愈率', '可以停药', '无需就医', '推荐方案', '生存率', '自动分级', '风险评分'];
 const PAGE_CONTEXT = {
   dashboard: () => ({ facts: [`${P().name}：${P().headline}`, '看板节奏卡以医生安排为准'], missing: ['下次节点的具体日期以医生安排为准'] }),
   tumor: () => ({ facts: P().pathology.filter(r => r[0] === 'row').map(r => `${r[1]}：${r[2]}（${r[4]}）`), missing: P().pathology.filter(r => r[0] === 'gap').map(r => `${r[1]}（未回报）`) }),
@@ -852,7 +871,7 @@ const PAGE_CONTEXT = {
   imaging: () => ({ facts: [`资料库 ${DOCS[state.profile].length} 份，待核对 ${DOCS[state.profile].filter(d => d.status !== '已核对').length} 份`], missing: CANDS[state.profile].filter(c => c.status !== 'accepted').map(c => `${c.name}（未核对）`) }),
   review: () => ({ facts: P().rhythm.map(r => `${r[0]}：${r[1]}（${r[2]}）`), missing: P().questions.filter(q => !q[2]).map(q => `待问：${q[1]}`) }),
   life: () => ({ facts: ['活动量：' + P().activity], missing: [] }),
-  trials: () => ({ facts: [`2026 线索演示 ${TRIALS.length} 条（真实登记摘录，状态未核实；全量采集 721 条）`], missing: [] })
+  trials: () => ({ facts: [`2026 线索演示 ${TRIALS.length} 条（真实登记摘录，状态未核实；全量采集 721 条，其中标题明确含肾癌 / RCC 表述 68 条，演示 10 条均在 68 条内）`], missing: [] })
 };
 function buildPrompt() {
   const ctx = PAGE_CONTEXT[state.view]();
@@ -870,6 +889,7 @@ function renderAgent() {
   dock.hidden = !state.agentOpen;
   grid.classList.toggle('agent-open', state.agentOpen);
   grid.classList.toggle('agent-wide', state.agentOpen && state.agentSize === 'wide');
+  grid.classList.toggle('agent-narrow', state.agentOpen && state.agentSize === 'narrow');
   btn.setAttribute('aria-expanded', String(state.agentOpen));
   $('#agent-state').textContent = state.agentOpen ? '已打开' : '未进入激活';
   $('#agent-toggle i').classList.toggle('grey', !state.agentOpen);
@@ -919,13 +939,13 @@ function dlgSettings() {
   <div class="cfg-block" style="margin-top:12px" data-tab="parse" hidden><h3>文档解析（MinerU）</h3><div class="token-row"><code class="masked">MINERU_TOKEN 已配置（掩码：mr-****）</code></div>
   <p class="small-note">Token 只存本机 .secrets/（mode 600）；解析结果永远是候选，核对后才入档。</p></div>
   <div class="cfg-block" style="margin-top:12px" data-tab="kb" hidden><h3>2026 临床数据库</h3><div class="path-row"><code>kidney_cancer_trials_2026.sqlite · 721 条（CDE 363 + CTV 358）</code></div>
-  <p class="small-note">离线快照；ChiCTR 在线与 ICTRP 两通道本轮采集失败，未计入，覆盖未知。</p></div>`, '<button class="primary" data-action="close">完成</button>');
+  <p class="small-note">离线快照；8 个肾癌关键词宽口径检索，标题明确含肾癌 / RCC 表述的 68 条，其余为宽检索带入的生物等效性研究、肾功能 / 肾病 / 移植 / 尿路上皮等非肾癌表述与实体瘤早期试验（记录只有标题级字段，无法逐条判定适应症，不剔除、如实说明）。ChiCTR 在线与 ICTRP 两通道本轮采集失败，未计入，覆盖未知。</p></div>`, '<button class="primary" data-action="close">完成</button>');
 }
 function dlgAbout() {
   openDialog('小肾宝', '关于', `<div class="about"><div class="brand no-mark" style="zoom:2.2"></div><div class="about-meta">
     <div class="about-ver"><b>v${APP_INFO.version}</b>${pill(APP_INFO.channelLabel, 'violet')}</div>
     <dl><div><dt>构建</dt><dd>${APP_INFO.build}</dd></div><div><dt>形态</dt><dd>交互原型（单机多文件）· 全部患者数据为模拟</dd></div>
-    <div><dt>数据</dt><dd>2026 临床试验：真实登记摘录（CDE / CTV 通道），状态未核实</dd></div>
+    <div><dt>数据</dt><dd>2026 临床试验：真实登记摘录（CDE / CTV 通道，宽口径检索 721 条 / 标题明确含肾癌 / RCC 表述 68 条），状态未核实</dd></div>
     <div><dt>家族</dt><dd>小 X 宝家族 · RenalPal 小肾宝</dd></div></dl></div></div>`, '<button class="primary" data-action="close">关闭</button>');
 }
 function dlgHelp() {
@@ -1111,7 +1131,18 @@ document.addEventListener('keydown', (e) => {
   const card = e.target.closest && e.target.closest('.mcard[data-mcard]:not([data-static])');
   if (card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); flipCard(card.dataset.mcard); }
 });
-$('#font-toggle').addEventListener('click', () => { const on = document.body.classList.toggle('large'); $('#font-toggle').setAttribute('aria-pressed', String(on)); });
+/* 字号三档循环（DEV-REQUIREMENTS §二：基础层 1 / 1.15 / 1.32）。
+   原型组件字号是逐页调优的固定 px，本按钮只切 body --font 基础层；
+   完整 calc(NNpx * var(--tz)) 乘法体系属开发版（M6）落地项，见 DEV-REQUIREMENTS §二本体注解。 */
+$('#font-toggle').addEventListener('click', () => {
+  const order = ['', 'large', 'xl'];
+  const cur = order.findIndex((c) => document.body.classList.contains(c));
+  const next = order[(cur + 1) % order.length];
+  document.body.classList.remove('large', 'xl');
+  if (next) document.body.classList.add(next);
+  $('#font-toggle').setAttribute('aria-pressed', String(next !== ''));
+  $('#font-toggle').title = next === 'xl' ? '字号：特大（再点回正常）' : '字号：正常 / 大字 / 特大';
+});
 window.addEventListener('hashchange', () => { const v = location.hash.slice(1); if (v && v !== state.view && VIEWS[v]) { state.view = v; render(); } });
 
 const initialHash = location.hash.slice(1);
