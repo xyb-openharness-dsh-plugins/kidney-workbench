@@ -21,6 +21,10 @@
   ],
   "scripts": {
     "check": "node --check dsh/index.js && node --check lib/client.js && node scripts/check-workbench-package.mjs .",
+    "demo:data": "node --disable-warning=ExperimentalWarning demo/build-demo-data.mjs",
+    "check:schema": "node --disable-warning=ExperimentalWarning scripts/check-schema.mjs",
+    "check:demo": "node --disable-warning=ExperimentalWarning scripts/check-demo-columns.mjs",
+    "probe:proto": "node --disable-warning=ExperimentalWarning scripts/probe-proto.mjs",
     "audit": "node scripts/check-conformance.mjs .",
     "release:check": "npm run check && npm run audit",
     "pack:check": "npm pack --dry-run"
