@@ -1,0 +1,53 @@
+{
+  "name": "@xyb-community/kidney-workbench",
+  "version": "0.1.0",
+  "description": "面向肾癌患者与照护者的本机病程资料、分型与手术档案、肾功能趋势、主动监测、靶向与免疫治疗线序、副作用日常记录与复诊准备工作台设计项目",
+  "private": true,
+  "type": "module",
+  "main": "./dsh/index.js",
+  "exports": {
+    ".": "./dsh/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml"
+  },
+  "files": [
+    "dsh",
+    "lib",
+    "assets",
+    "cordis.patch.yml",
+    "README.md",
+    "NOTICE.md"
+  ],
+  "scripts": {
+    "check": "node --check dsh/index.js && node --check lib/client.js && node scripts/check-workbench-package.mjs .",
+    "audit": "node scripts/check-conformance.mjs .",
+    "release:check": "npm run check && npm run audit",
+    "pack:check": "npm pack --dry-run"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "dsh-desktop-workbenches"
+      ]
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xyb-openharness-dsh-plugins/kidney-workbench"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": ">=4.0.1 <5",
+    "@deepseek-ai/dsh-client-connection": ">=0.1.0-rc.0 <0.3.0-0",
+    "@deepseek-ai/dsh-host-webserver": ">=0.1.0-rc.0 <0.3.0-0",
+    "@deepseek-ai/schemastery": ">=3.18.1 <4"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "UNLICENSED"
+}

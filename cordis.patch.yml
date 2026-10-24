@@ -1,0 +1,5 @@
+- insert:
+    - id: kidney-workbench-main
+      name: "@xyb-community/kidney-workbench"
+      config:
+        root: !!js dshHomePath('kidney-workbench')
