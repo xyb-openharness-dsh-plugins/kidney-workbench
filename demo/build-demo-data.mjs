@@ -268,7 +268,9 @@ const PROFILE_B = {
 
 /* 组装档案（公共指标按档案复制，避免交叉污染） */
 function assemble(P, labs) {
-  const metrics = labs().map((m) => ({ ...m, color: KEY_COLOR[m.key] || m.color, band: m.band ?? null }));
+  /* kind 在这里补全（定性指标原文件只写 'qual'，数值指标没写）：读模型要能把库里的行
+     还原成与这里**逐字段相同**的对象，kind 缺一半就没法逐字段对齐（M6 parity 要求）。 */
+  const metrics = labs().map((m) => ({ ...m, kind: m.kind || (m.dec === null ? 'qual' : 'numeric'), color: KEY_COLOR[m.key] || m.color, band: m.band ?? null }));
   return { ...P.meta, titles: P.titles, pathology: P.pathology, staging: P.staging, surgery: P.surgery,
     contra: P.contra, as: P.as, lines: P.lines, imdc: P.imdc, cycles: P.cycles, tox: P.tox,
     genetics: P.genetics, questions: P.questions, rhythm: P.rhythm, viewpoints: P.viewpoints,
@@ -330,17 +332,10 @@ function isDirectRun() {
 }
 
 /* ---------- 产 1：SQLite ---------- */
-function writeSqlite() {
-  const db = new DatabaseSync(join(ROOT, 'demo/demo-data.sqlite'));
-  db.exec(`
-DROP TABLE IF EXISTS metric_points; DROP TABLE IF EXISTS metrics;
-DROP TABLE IF EXISTS events; DROP TABLE IF EXISTS rhythm; DROP TABLE IF EXISTS cycles; DROP TABLE IF EXISTS lines_rows;
-DROP TABLE IF EXISTS pathology_rows; DROP TABLE IF EXISTS staging_rows; DROP TABLE IF EXISTS surgery_rows;
-DROP TABLE IF EXISTS contra_rows; DROP TABLE IF EXISTS as_rows; DROP TABLE IF EXISTS imdc_rows;
-DROP TABLE IF EXISTS symptom_rows; DROP TABLE IF EXISTS genetics_rows; DROP TABLE IF EXISTS question_rows;
-DROP TABLE IF EXISTS viewpoints; DROP TABLE IF EXISTS trials; DROP TABLE IF EXISTS subjects; DROP TABLE IF EXISTS demo_meta;
-DROP TABLE IF EXISTS documents; DROP TABLE IF EXISTS candidate_fields;
-/* 列与 schema/0001_initial.sql 逐条一致；改这里要同步改 schema，反之亦然——两边是同一套列的镜像。 */
+
+/* 建表 SQL：与 schema/0001_initial.sql 逐条一致；改这里要同步改 schema，反之亦然——两边是同一套列的镜像。
+   dsh 侧的库由 dsh/store.js 的 migrate() 建表，不需要这份；只有生成 demo/demo-data.sqlite 时才用。 */
+const CREATE_SQL = `
 CREATE TABLE subjects (profile_key TEXT PRIMARY KEY, name TEXT, sex TEXT, age INTEGER, meta TEXT, headline TEXT, stage TEXT, mindset TEXT, dash_keys TEXT, path TEXT, activity TEXT, family_talk TEXT, pathology_title TEXT, staging_title TEXT, surgery_title TEXT, contra_title TEXT, as_title TEXT, lines_title TEXT, imdc_title TEXT, tox_title TEXT, genetics_title TEXT, rhythm_title TEXT, question_title TEXT);
 CREATE TABLE metrics (profile_key TEXT, key TEXT, name TEXT, unit TEXT, cat TEXT, color TEXT, dec INTEGER, kind TEXT, band_low REAL, band_high REAL, note TEXT, PRIMARY KEY(profile_key, key));
 CREATE TABLE metric_points (profile_key TEXT, metric_key TEXT, d TEXT, v_num REAL, v_text TEXT, src TEXT, ord INTEGER, PRIMARY KEY(profile_key, metric_key, d, ord));
@@ -363,7 +358,12 @@ CREATE TABLE demo_meta (k TEXT PRIMARY KEY, v TEXT);
 CREATE TABLE documents (profile_key TEXT, id TEXT, name TEXT, date TEXT, type TEXT, status TEXT, ord INTEGER, PRIMARY KEY(profile_key, id));
 CREATE TABLE candidate_fields (profile_key TEXT, id TEXT, name TEXT, value TEXT, source TEXT, status TEXT, ord INTEGER, PRIMARY KEY(profile_key, id));
 CREATE INDEX idx_points ON metric_points(profile_key, metric_key);
-`);
+`;
+
+/* 把演示数据写进**任意**一个 SQLite 连接：生成器产物（demo/demo-data.sqlite）与 dsh 侧播种
+   （dsh/demo.js 的 seedDemo）共用这一份 INSERT。绝不在 dsh/demo.js 里写第二遍——
+   两处 INSERT 迟早漂移，改一处漏一处（家族已踩过一次）。 */
+export function seedDatabase(db) {
   for (const [k, p] of Object.entries(DATA.profiles)) {
     const t = p.titles || {};
     db.prepare(`INSERT INTO subjects
@@ -376,7 +376,7 @@ CREATE INDEX idx_points ON metric_points(profile_key, metric_key);
         p.activity, p.familyTalk,
         t.pathology, t.staging, t.surgery, t.contra, t.as, t.lines, t.imdc, t.tox, t.genetics, t.rhythm, t.question);
     for (const m of p.metrics) {
-      db.prepare('INSERT INTO metrics VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(k, m.key, m.name, m.unit, m.cat, m.color, m.dec, m.dec === null ? (m.kind || 'qual') : 'numeric', m.band ? m.band[0] : null, m.band ? m.band[1] : null, m.note);
+      db.prepare('INSERT INTO metrics VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(k, m.key, m.name, m.unit, m.cat, m.color, m.dec, m.kind, m.band ? m.band[0] : null, m.band ? m.band[1] : null, m.note);
       m.points.forEach((pt, i) => db.prepare('INSERT INTO metric_points VALUES (?,?,?,?,?,?,?)').run(k, m.key, pt.d, typeof pt.v === 'number' ? pt.v : null, typeof pt.v === 'number' ? null : pt.v, pt.src, i));
     }
     p.events.forEach(e => db.prepare('INSERT INTO events VALUES (?,?,?)').run(k, e.d, e.label));
@@ -398,6 +398,21 @@ CREATE INDEX idx_points ON metric_points(profile_key, metric_key);
   }
   DATA.trials.forEach(t => db.prepare('INSERT INTO trials VALUES (?,?,?,?,?,?)').run(t.id, t.title, t.phase, t.status, t.sponsor, t.url));
   buildMeta().forEach(([k, v]) => db.prepare('INSERT INTO demo_meta VALUES (?,?)').run(k, v));
+}
+
+function writeSqlite() {
+  const db = new DatabaseSync(join(ROOT, 'demo/demo-data.sqlite'));
+  db.exec(`
+DROP TABLE IF EXISTS metric_points; DROP TABLE IF EXISTS metrics;
+DROP TABLE IF EXISTS events; DROP TABLE IF EXISTS rhythm; DROP TABLE IF EXISTS cycles; DROP TABLE IF EXISTS lines_rows;
+DROP TABLE IF EXISTS pathology_rows; DROP TABLE IF EXISTS staging_rows; DROP TABLE IF EXISTS surgery_rows;
+DROP TABLE IF EXISTS contra_rows; DROP TABLE IF EXISTS as_rows; DROP TABLE IF EXISTS imdc_rows;
+DROP TABLE IF EXISTS symptom_rows; DROP TABLE IF EXISTS genetics_rows; DROP TABLE IF EXISTS question_rows;
+DROP TABLE IF EXISTS viewpoints; DROP TABLE IF EXISTS trials; DROP TABLE IF EXISTS subjects; DROP TABLE IF EXISTS demo_meta;
+DROP TABLE IF EXISTS documents; DROP TABLE IF EXISTS candidate_fields;
+`);
+  db.exec(CREATE_SQL);
+  seedDatabase(db);
   db.close();
 }
 
@@ -407,6 +422,9 @@ function writePrototypeJs() {
      加进去会让 demo-data.js 的字节数每次运行都变（generated_at），原型快照不该这样。 */
   const js = '/* 由 demo/build-demo-data.mjs 生成；勿手改，改数据请改生成器后重新运行。 */\nwindow.DEMO_DATA = ' + JSON.stringify(DATA) + ';\n';
   writeFileSync(join(P2, 'demo-data.js'), js);
+  /* 开发版离线回退：public/demo-data.js 与原型那份**同一份字节**，bootstrap 没回来时用它。
+     两份都写，是因为原型走 file://、开发版走 /api/kidney/ui/，路径不同无法共用一份文件。 */
+  writeFileSync(join(ROOT, 'public', 'demo-data.js'), js);
 }
 
 /* ---------- 只有被当作脚本直接运行时才落盘 ---------- */
@@ -416,4 +434,10 @@ if (isDirectRun()) {
   const nMetrics = Object.values(DATA.profiles).reduce((a, p) => a + p.metrics.length, 0);
   const nPoints = Object.values(DATA.profiles).reduce((a, p) => a + p.metrics.reduce((b, m) => b + m.points.length, 0), 0);
   console.log(`demo-data.sqlite + demo-data.js 生成完毕：2 档案 / ${nMetrics} 项指标 / ${nPoints} 个数据点 / ${DATA.trials.length} 条试验`);
+}
+
+/* dsh 侧播种用的出口名：与家族（thyroid / cervical）保持一致，内容与 buildDemoProfiles()
+   完全相同——演示数据的**唯一**定义就在本文件，dsh/demo.js 只负责"什么时候种"。 */
+export function finalize() {
+  return buildDemoProfiles();
 }

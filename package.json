@@ -1,6 +1,6 @@
 {
   "name": "@xyb-community/kidney-workbench",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "面向肾癌患者与照护者的本机病程资料、分型与手术档案、肾功能趋势、主动监测、靶向与免疫治疗线序、副作用日常记录与复诊准备工作台设计项目",
   "private": true,
   "type": "module",
@@ -15,19 +15,35 @@
     "dsh",
     "lib",
     "assets",
+    "public",
+    "src",
+    "demo/build-demo-data.mjs",
+    "schema",
     "cordis.patch.yml",
     "README.md",
     "NOTICE.md"
   ],
   "scripts": {
-    "check": "node --check dsh/index.js && node --check lib/client.js && node scripts/check-workbench-package.mjs .",
+    "build:version": "KID_CHANNEL=beta node scripts/build-version.mjs",
+    "build:client": "node scripts/build-client.mjs",
+    "build:demo": "node --disable-warning=ExperimentalWarning demo/build-demo-data.mjs",
     "demo:data": "node --disable-warning=ExperimentalWarning demo/build-demo-data.mjs",
-    "check:schema": "node --disable-warning=ExperimentalWarning scripts/check-schema.mjs",
+    "start": "node --disable-warning=ExperimentalWarning scripts/dev-server.mjs",
+    "dev": "node --disable-warning=ExperimentalWarning scripts/dev-server.mjs",
+    "test": "node --disable-warning=ExperimentalWarning --test test/*.test.mjs",
+    "check:version": "node scripts/check-version.mjs",
+    "check:syntax": "node scripts/check-syntax.mjs",
+    "check:schema": "node scripts/check-schema.mjs",
+    "check:wording": "node scripts/check-wording.mjs",
+    "check:columns": "node scripts/check-demo-columns.mjs",
     "check:demo": "node --disable-warning=ExperimentalWarning scripts/check-demo-columns.mjs",
+    "check:install": "node scripts/check-install.mjs",
     "probe:proto": "node --disable-warning=ExperimentalWarning scripts/probe-proto.mjs",
     "audit": "node scripts/check-conformance.mjs .",
+    "check": "KID_CHANNEL=beta node scripts/build-version.mjs && node --disable-warning=ExperimentalWarning demo/build-demo-data.mjs && node scripts/build-client.mjs --check && node scripts/check-version.mjs && node scripts/check-syntax.mjs && node scripts/check-schema.mjs && node scripts/check-wording.mjs && node scripts/check-demo-columns.mjs && node --disable-warning=ExperimentalWarning --test test/*.test.mjs && node scripts/check-workbench-package.mjs .",
     "release:check": "npm run check && npm run audit",
-    "pack:check": "npm pack --dry-run"
+    "pack:check": "npm pack --dry-run",
+    "probe:dev": "node --disable-warning=ExperimentalWarning scripts/probe-dev.mjs"
   },
   "dsh": {
     "bundle": {

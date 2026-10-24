@@ -11,10 +11,54 @@
 | M3 | 临床试验采集（在线通道）+ CLINICAL-DATA-2026 | 三处条数一致；逐来源终态 | ▶ |
 | M4 | 演示数据 + HTML demo（prototypes/v0.2） | 四必查件 + 窄宽 probe 0 问题 | ✅ 本轮 |
 | M5 | 独立评审（DESIGN-REVIEW） | 13 项检验单；P0=0 | ✅ 本轮（修订记录见 DESIGN-REVIEW §六） |
-| **G1** | **交第一次确认，停下等签认** | 用户原话留痕 SIGNOFF | ⏳ 待用户 |
-| M6 | 开发版移植（dsh 七件 + public + 检查链） | `npm run check` 全绿 + parity | ⏳ 未授权 |
+| **G1** | **交第一次确认，停下等签认** | 用户原话留痕 SIGNOFF | ✅ 2026-10-25（原话「确认G1 ok，继续后续开发」，签认范围见下节） |
+| M6 | 开发版移植（dsh 六件 + public + 检查链） | `npm run check` 全绿 + parity | ✅ 2026-10-25（v0.3.0；见下节） |
 | M7 | 装机验证（V2/V3） | 宿主信号 + 真机闭环 | ⏳ 未授权 |
 | M8 | 建私有仓 + push + BACKLOG 回流 | remote SSH；组织四件套同步 | ⏳ 未授权 |
+
+## M6 落地记录（2026-10-25 · v0.3.0）
+
+**形态**：`prototypes/v0.2/`（G1 签认的视觉基准）派生出 `public/`，`dsh/` 从 25 行骨架长成六件，lib 补三件，
+检查链从 3 步补到 9 步，单测 33 项。版本号 0.2.0 → 0.3.0（原型快照冻结在 0.2.0，由 `check-version` 钉住）。
+
+| 件 | 做法 |
+| --- | --- |
+| `dsh/store.js` | 母版（thyroid）整体复制，零业务、零改动 |
+| `dsh/demo.js` | **不写第二份 INSERT**——调生成器的 `seedDatabase(db)`；只管"什么时候种"（库里已有档案就整批跳过） |
+| `dsh/readmodels.js` | 21 张表还原成原型档案形状；`bootstrap.profiles` 用**字典**（A/B 为键），与 demo-data.js 同形，前端那段建索引的循环因此能原样复用 |
+| `dsh/routes.js` | 最小四路由：`/health`、`/bootstrap`、`/profile/:key`、`/ui/*`；前缀 `/api/kidney`；MinerU 导入三条路由不留空占位（对应的 parse/settings 不在本仓） |
+| `dsh/server.js` / `workbench.js` | 母版复制；`DB_FILE = xyb-kidney.sqlite` |
+| `dsh/index.js` | 母版结构（root 可选 → 内存演示库；开库前 recursive 建目录；懒重试 1s 防抖；数据源代理用 getter；鉴权在 handler 层） |
+| `public/` | style.css 逐字节复制；index.html 改四处（robots / title / description / 顶部状态条）；app.js **五处定点替换**（数据层 fetch bootstrap + 离线回退、版本随 VERSION、启动异步化、默认指标按档案重算、AI 提示词走 `kid:agent-draft` 交给外壳） |
+| `lib/version.js` / `lib/layout.js` / `lib/client.js` | 生成物；`src/client.js` 是源码（改客户端改 src 再 `build:client`）。面板 `customFrame=true` / left / 0.65 / 会话 0.25–0.45 |
+| `test/` | 33 项：store 10（含 parity、幂等、四契约在 schema 上的落点）、api 9（真服务 + 路径穿越 + 拒绝清单）、client 7（ModuleLoader 形态 + apiBase 双形态）、ui-parity 7（原型每行都在 + 新增函数白名单 + style.css 逐字节） |
+
+**两条刻意的选择**（都可能被质疑，留个理由）：
+
+1. **INSERT 只有一份**。母版 thyroid 的 `dsh/demo.js` 有 400 行自己的 INSERT。肾癌 21 张表再抄一遍就是两处漂移源
+   （schema 与生成器已经是一对镜像了，不能再来第三份）。所以生成器导出 `seedDatabase(db)`，播种只调它。
+2. **bootstrap 的 profiles 是字典不是数组**。原型 `DATA.profiles` 就是 `{A, B}`，用字典能让前端建索引的循环
+   原样复用；数组方案会逼着前端为"原型 / 开发版"写两套数据层。代价是单测比对方式改成 `getProfile(db,'A')` vs `DEMO.profiles.A`。
+
+**复跑证据**：`npm run check` 全绿（10 处版本同源 + 33 文件语法 + schema 冻结 + 文案红线 0 越界 + 列一致 + 33 单测 + 包检查 staticPass）；
+`npm run audit` 33/33；`npm run probe:dev` 通过（真服务：`/health ok=true`、`/bootstrap` 2 档案 10 试验；页面 `dataSource=api`、
+11 一级页 / 34 页签、档案切换 A→B 界面换人、0 console 错误、0 加载失败、桌面与 400px 均无横向溢出、截图 2 张）。
+
+## G1 签认记录（2026-10-25）
+
+| 项 | 内容 |
+| --- | --- |
+| 签认人 | samqin123（会话内） |
+| 原话 | 「确认G1 ok，继续后续开发」 |
+| 日期 | 2026-10-25 |
+| 签认前版本 | v0.2.0，提交 `72786a6`（M5 修订批次） |
+| 签认的范围 | ① 11 个一级页 / 34 个二级页签（含「临床研究」独立成页、「资料整理」收在影像页第 3 页签）；② DIFF-MATRIX §四 决策点 1–8 按原型现状收下；③ 721=宽检索命中量的分层口径、药名「获批状态未核实」标注方式 |
+| 签认的性质 | 拍的是**范围**，不是「需求已核实」——无访谈，场景仍全假设（风险 1 未解除） |
+| 授权 | M6 开发版移植、M7 装机、M8 建仓与回流 |
+
+签认依据的材料包：demo（`prototypes/v0.2/index.html`，file:// 直开）、`docs/shots/` 10 张截图、
+DIFF-MATRIX §一/§三 差异化、CLINICAL-DATA-2026 §2/§3 覆盖与缺口、DESIGN-REVIEW 全文 + §六 修订记录、
+DEV-REQUIREMENTS §四 明确未做 8 条。
 
 ## 阶段 1.6 要交的东西（G1 前备齐）
 

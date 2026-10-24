@@ -1,7 +1,8 @@
 # 小肾宝 RenalPal · 肾癌患者工作台
 
-> 肾癌（NCCN #36）患者与照护者的本机病程资料工作台。**当前状态：G1 前的交互原型**——
-> 患者数据全部为模拟；临床试验为真实登记摘录（状态未核实）；不提供任何医疗判断。
+> 肾癌（NCCN #36）患者与照护者的本机病程资料工作台。**当前状态：v0.3.0 开发版**（G1 已签认，
+> M6 开发版移植完成，M7 装机进行中）——原型演示数据全部为模拟；临床试验为真实登记摘录（状态未核实）；
+> 不提供任何医疗判断。
 
 ## 应用开发目的
 
@@ -52,20 +53,34 @@
 
 ## 打开演示
 
+**原型（G1 签认的视觉基准，file:// 直接打开）**：
+
 ```bash
-# 任选其一，直接打开（file:// 无需服务）：
 open prototypes/v0.2/index.html        # macOS
 xdg-open prototypes/v0.2/index.html    # Linux
 ```
 
+**开发版（v0.3.0，真服务 + 本机资料库）**：
+
+```bash
+npm run start -- --workspace ~/我的肾癌资料   # 目录必须你明确指定，不猜、不静默创建
+# 打开 http://127.0.0.1:4173/ ；不带 --workspace 会提示用法并退出（exit 2）
+```
+
+开发版与原型是同一份渲染代码（`public/app.js` 只有五处定点替换：数据从哪来 / 版本 / 启动顺序 /
+默认指标重算 / AI 提示词出口），所以原型上跑过的 70 个页签探针在开发版上同样成立。
+
 演示数据唯一来源 `demo/build-demo-data.mjs`（同时产 sqlite 与 `demo-data.js`，重跑字节稳定）：
 
 ```bash
-npm run demo:data     # 重新生成演示数据（2 档案 / 24 指标 / 94 数据点 / 10 条试验）
+npm run demo:data     # 重新生成演示数据（2 档案 / 25 指标 / 95 数据点 / 10 条试验）
 npm run check:schema  # schema 冻结合同
 npm run check:demo    # 演示数据与 schema 列一致性
-npm run probe:proto   # 无头 Chrome 走查 70 (页签 × 档案) + 一图秀断言 + 截图
-npm run check         # 家族检查链（版本/语法/冻结合同/文案红线/密钥/单测/列一致）
+npm run probe:proto   # 原型无头走查 70 (页签 × 档案) + 一图秀断言 + 截图
+npm run probe:dev     # 开发版无头实测（真服务 + 真数据 + 34 页签账 + 溢出 + 截图 2 张）
+npm run test          # 33 项单测（store / api / client / ui-parity）
+npm run check         # 家族检查链 9 步（版本/语法/冻结合同/文案红线/列一致/单测/包检查）
+npm run audit         # 家族一致性审计（当前 33/33）
 ```
 
 ## 数据与边界（诚实口径）
