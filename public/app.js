@@ -18,7 +18,7 @@
    - 一图秀事件竖虚线上端止于 CY0-10（DEV-REQUIREMENTS 硬约束 23）。 */
 
 const APP_INFO = {
-  version: '0.3.2',
+  version: '0.3.3',
   build: '2026-10-24',
   channel: 'dsh',
   channelLabel: '开发版 · 已连接工作台数据'
