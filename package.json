@@ -1,6 +1,6 @@
 {
   "name": "@xyb-community/kidney-workbench",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "面向肾癌患者与照护者的本机病程资料、分型与手术档案、肾功能趋势、主动监测、靶向与免疫治疗线序、副作用日常记录与复诊准备工作台设计项目",
   "private": true,
   "type": "module",
