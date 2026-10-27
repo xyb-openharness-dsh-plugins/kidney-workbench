@@ -18,7 +18,7 @@
    - 一图秀事件竖虚线上端止于 CY0-10（DEV-REQUIREMENTS 硬约束 23）。 */
 
 const APP_INFO = {
-  version: '0.3.0',
+  version: '0.3.1',
   build: '2026-10-24',
   channel: 'dsh',
   channelLabel: '开发版 · 已连接工作台数据'
@@ -452,6 +452,56 @@ const pageHead = (sub) => `<div class="page-head"><div><h1>${esc(PAGES.find(p =>
 const row = (b, p, right = '') => `<div class="row"><div class="row-main"><div><b>${b}</b>${p ? `<p>${p}</p>` : ''}</div></div>${right}</div>`;
 const pill = (t, c = '') => `<span class="pill ${c}">${esc(t)}</span>`;
 
+/* 36 号 §2.6 · 看板首卡状态卡四件：卡头 eyebrow / 派生天数 / 现状行 / 出口按钮排。
+   天数由锚点日与当天日期计算，不手填：一线系统治疗首日（A）/ 主动监测首次影像（B）= Day 0；
+   两处都没有时整卡显示「待初始化」，指向「我的瘤与分型 · 分期记录」补日期。 */
+function isoDay(s) {
+  const m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) : null;
+}
+function dayDiff(from, to) {
+  const a = isoDay(from), b = isoDay(to);
+  return a === null || b === null ? null : Math.round((b - a) / 86400000);
+}
+/* 不用 data-primer-open：那个属性由 primer.js 接管，顶栏「?」会因此不被自动挂载（36 号 §3.2）。
+   模块未接入时不渲染，避免留一个点了没反应的按钮。 */
+function primerCta() {
+  if (typeof window === 'undefined' || !window.DiseasePrimer) return '';
+  return '<button class="soft" data-primer-cta aria-haspopup="dialog" aria-controls="disease-primer">疾病概要：肾癌是什么？</button>';
+}
+function statusCard(p) {
+  const today = new Date().toISOString().slice(0, 10);
+  const line = (p && p.lines && p.lines[0]) || null;
+  const asRows = (p && p.as) || [];
+  const asFirst = asRows[0] || null;
+  const anchor = line ? line[3] : (asFirst ? asFirst[0] : '');
+  const anchorLabel = line ? '一线系统治疗首日' : (asFirst ? '主动监测首次影像' : '');
+  const days = dayDiff(anchor, today);
+  const next = (p && p.rhythm && p.rhythm[0]) || null;
+  if (days === null) {
+    return `<div class="stage-strip" data-status-card="uninitialized"><span class="eyebrow">D+N 状态卡</span>`
+      + `<span class="stage-now"><b>待初始化</b><small>未找到锚点日（一线系统治疗首日 / 首次监测影像 = Day 0），天数不由本台手填。先去「我的瘤与分型 · 分期记录」补日期；本台暂无独立三步向导。</small></span>`
+      + `<div class="actions"><button class="primary" data-action="go-sub" data-view="tumor" data-sub-i="1">去补起始日期 →</button>${primerCta()}</div></div>`;
+  }
+  const nextLabel = next ? String(next[0]).replace(/（.*$/, '') : '下一阶段';
+  const nextRaw = next ? `下次：${String(next[3] || '').replace(/^下次：/, '')}（${nextLabel}）` : '下次：待预约';
+  let curName, stateTxt, curDetail;
+  if (line) {
+    curName = line[1]; stateTxt = line[5] || '进行中'; curDetail = `${line[2]} · ${line[3]} 起`;
+  } else {
+    const last = asRows[asRows.length - 1];
+    curName = '主动监测'; stateTxt = '进行中';
+    curDetail = last ? `最近影像 ${last[0]} ${last[1]} ${last[2]}（按报告原文并列，不判读）` : '影像记录待补';
+  }
+  const core = line
+    ? { attrs: 'data-action="go-sub" data-view="treatment" data-sub-i="0"', text: '看治疗线序 →' }
+    : { attrs: 'data-action="go-sub" data-view="monitor" data-sub-i="1"', text: '看主动监测影像 →' };
+  return `<div class="stage-strip" data-status-card="ready"><span class="eyebrow">D+${days} 状态卡 · 距${esc(nextLabel)}</span>`
+    + `<span class="stage-day"><b>第 ${days} 天</b><small>锚点 ${esc(anchor)} ${esc(anchorLabel)}（Day 0）</small></span>`
+    + `<span class="stage-now"><b>${esc(curName)} · ${esc(stateTxt)}</b><small>${esc(curDetail)} · ${esc(nextRaw)} · 只引用记录与日期</small></span>`
+    + `<div class="actions"><button class="primary" ${core.attrs}>${core.text}</button>${primerCta()}</div></div>`;
+}
+
 /* ---------------- views ---------------- */
 function vDashboard() {
   const p = P(), m = M();
@@ -474,7 +524,7 @@ function vDashboard() {
     ${p.rhythm.map(r => row(`<b>${esc(r[0])}</b>`, `${esc(r[1])} — ${esc(r[2])}`, `<small>${esc(r[3])}</small>`)).join('')}
     <p class="small-note">以上为指南常见节奏摘录（机构 + 版本 + 小节，页码待核），仅供准备讨论；实际安排以你的医生为准。</p></div>`;
   const cards = (DASH_KEYS[state.profile] || []).filter(k => m[k]).map(k => mcard(k, m[k])).join('');
-  return `<div class="page-enter">${pageHead()}
+  return `<div class="page-enter">${pageHead()}${statusCard(p)}
   <div class="hero"><div><span class="eyebrow">当前情况</span><h1>${esc(p.headline)}</h1><p>${esc(p.mindset)}</p>
     <div class="actions"><button class="primary" data-action="go-sub" data-view="labs" data-sub-i="1">看病情一图秀</button><button class="soft" data-action="go-sub" data-view="tumor">我的瘤与分型</button><button class="soft hero-ai" data-action="agent-open">${icon('chat')}AI 对话</button></div></div>
     <div class="hero-mascot" aria-hidden="true"><span style="font-size:56px">🫘</span></div></div>
@@ -1202,6 +1252,13 @@ document.addEventListener('click', (e) => {
     return;
   }
   if (map[act]) map[act](e.target.closest('[data-action]'));
+});
+/* 36 号 §2.6 出口：状态卡副按钮打开疾病概要（与顶栏「?」同一个整页面板） */
+document.addEventListener('click', (e) => {
+  const cta = e.target.closest('[data-primer-cta]');
+  if (!cta) return;
+  e.preventDefault();
+  if (window.DiseasePrimer) window.DiseasePrimer.open(cta);
 });
 document.addEventListener('input', (e) => {
   if (e.target.matches('[data-action="zoom"]')) { const sib = e.target.nextElementSibling; if (sib) sib.textContent = e.target.value + '%'; }

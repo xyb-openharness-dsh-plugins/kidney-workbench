@@ -28,9 +28,9 @@ window.DISEASE_PRIMER = {
         '本台不判断「是不是癌」——那是病理与医生的领域。'
       ],
       sources: [
-        { org: 'AJCC', doc: 'Cancer Staging Manual, 8th ed.（肾章节）', version: '第 8 版（年份未核实）', original: false, page: '页码待核' },
-        { org: 'WHO / ISUP', doc: '泌尿系统肿瘤分类与病理分级', version: '版本未核实', original: false, page: '页码待核' },
-        { org: 'CSCO', doc: 'CSCO《常见恶性肿瘤诊疗指南 2025》肾癌分册', version: '2025 版', original: false, page: '页码待核' }
+        { org: 'AJCC', doc: 'Cancer Staging Manual, 8th ed.（肾章节）', version: '第 8 版（年份未核实）', original: false, secondaryUrl: 'https://www.cancer.gov/types/kidney/hp/kidney-treatment-pdq', note: '二次来源：NCI PDQ 肾癌治疗综述（含分期口径）', page: '页码待核' },
+        { org: 'WHO / ISUP', doc: '泌尿系统肿瘤分类与病理分级', version: '版本未核实', original: false, secondaryUrl: 'https://publications.iarc.fr/Book-And-Report-Series/Who-Classification-Of-Tumours/Urinary-And-Male-Genital-Tumours-2022', note: '二次来源：IARC 书目页（第 5 版），全文未核对', page: '页码待核' },
+        { org: 'CSCO', doc: 'CSCO《常见恶性肿瘤诊疗指南 2025》肾癌分册', version: '2025 版', original: false, secondaryUrl: 'https://www.pmphmall.com/gdsdetail/656290-335888', note: '二次来源：人卫智慧服务商城书目页，全文未核对', page: '页码待核' }
       ]
     },
     {
@@ -41,11 +41,11 @@ window.DISEASE_PRIMER = {
       table: {
         head: ['机构', '文件', '版本 / 年份', '原件', '本台的用途'],
         rows: [
-          ['CSCO', 'CSCO《常见恶性肿瘤诊疗指南 2025》肾癌分册', '2025 版', '未取得原件（仅公开摘录）', '外科治疗（§4）与随访节奏（§7）的原文引用；页码待核'],
-          ['AJCC', 'Cancer Staging Manual, 8th ed.（肾章节）', '第 8 版（年份未核实）', '未取得原件', 'TNM 分期口径'],
-          ['WHO / ISUP', '泌尿系统肿瘤分类与病理分级', '版本未核实', '未取得原件', '分型与 1–4 级分级的命名口径'],
-          ['NCCN', 'NCCN Guidelines · Kidney Cancer', '版本未核实', '未取得原件', '范围参照；NCCN 列的不等于中国获批'],
-          ['EAU', 'EAU Guidelines on Renal Cell Carcinoma', '版本未核实', '未取得原件', '范围参照；与 NCCN 并列，不合并']
+          ['CSCO', 'CSCO《常见恶性肿瘤诊疗指南 2025》肾癌分册', '2025 版', { text: '未取得原件（仅公开摘录 · 二次来源）', url: 'https://www.pmphmall.com/gdsdetail/656290-335888' }, '外科治疗（§4）与随访节奏（§7）的原文引用；页码待核'],
+          ['AJCC', 'Cancer Staging Manual, 8th ed.（肾章节）', '第 8 版（年份未核实）', { text: '未取得原件 · 二次来源', url: 'https://www.cancer.gov/types/kidney/hp/kidney-treatment-pdq' }, 'TNM 分期口径'],
+          ['WHO / ISUP', '泌尿系统肿瘤分类与病理分级', '版本未核实', { text: '未取得原件 · 二次来源', url: 'https://publications.iarc.fr/Book-And-Report-Series/Who-Classification-Of-Tumours/Urinary-And-Male-Genital-Tumours-2022' }, '分型与 1–4 级分级的命名口径'],
+          ['NCCN', 'NCCN Guidelines · Kidney Cancer', '版本未核实', { text: '未取得原件 · 二次来源', url: 'https://www.nccn.org/guidelines/guidelines-detail?category=1&id=1440' }, '范围参照；NCCN 列的不等于中国获批'],
+          ['EAU', 'EAU Guidelines on Renal Cell Carcinoma', '版本未核实', { text: '未取得原件 · 二次来源', url: 'https://uroweb.org/guidelines/renal-cell-carcinoma' }, '范围参照；与 NCCN 并列，不合并']
         ]
       },
       points: [
@@ -55,11 +55,11 @@ window.DISEASE_PRIMER = {
         '分型、分期、分级各自来源单列，不在本表里做换算。'
       ],
       sources: [
-        { org: 'CSCO', doc: 'CSCO《常见恶性肿瘤诊疗指南 2025》肾癌分册', version: '2025 版', original: false, page: '页码待核' },
-        { org: 'AJCC', doc: 'Cancer Staging Manual, 8th ed.（肾章节）', version: '第 8 版（年份未核实）', original: false, page: '页码待核' },
-        { org: 'WHO / ISUP', doc: '泌尿系统肿瘤分类与病理分级', version: '版本未核实', original: false, page: '页码待核' },
-        { org: 'NCCN', doc: 'NCCN Guidelines · Kidney Cancer', version: '版本未核实', original: false, page: '页码待核' },
-        { org: 'EAU', doc: 'EAU Guidelines on Renal Cell Carcinoma', version: '版本未核实', original: false, page: '页码待核' }
+        { org: 'CSCO', doc: 'CSCO《常见恶性肿瘤诊疗指南 2025》肾癌分册', version: '2025 版', original: false, secondaryUrl: 'https://www.pmphmall.com/gdsdetail/656290-335888', note: '二次来源：人卫智慧服务商城书目页，全文未核对', page: '页码待核' },
+        { org: 'AJCC', doc: 'Cancer Staging Manual, 8th ed.（肾章节）', version: '第 8 版（年份未核实）', original: false, secondaryUrl: 'https://www.cancer.gov/types/kidney/hp/kidney-treatment-pdq', note: '二次来源：NCI PDQ 肾癌治疗综述（含分期口径）', page: '页码待核' },
+        { org: 'WHO / ISUP', doc: '泌尿系统肿瘤分类与病理分级', version: '版本未核实', original: false, secondaryUrl: 'https://publications.iarc.fr/Book-And-Report-Series/Who-Classification-Of-Tumours/Urinary-And-Male-Genital-Tumours-2022', note: '二次来源：IARC 书目页（第 5 版），全文未核对', page: '页码待核' },
+        { org: 'NCCN', doc: 'NCCN Guidelines · Kidney Cancer', version: '版本未核实', original: false, secondaryUrl: 'https://www.nccn.org/guidelines/guidelines-detail?category=1&id=1440', note: '二次来源：NCCN 指南详情页（全文需免费注册）', page: '页码待核' },
+        { org: 'EAU', doc: 'EAU Guidelines on Renal Cell Carcinoma', version: '版本未核实', original: false, secondaryUrl: 'https://uroweb.org/guidelines/renal-cell-carcinoma', note: '二次来源：EAU 肾癌指南专题页', page: '页码待核' }
       ]
     },
     {
@@ -107,9 +107,9 @@ window.DISEASE_PRIMER = {
         '以上是文献与指南里列出的手段，按病期与线序排列，不代表任何一项适合你。选哪一个，这一句需要问你的医生。'
       ],
       sources: [
-        { org: 'CSCO', doc: 'CSCO《常见恶性肿瘤诊疗指南 2025》肾癌分册', version: '2025 版', original: false, page: '页码待核' },
-        { org: 'NCCN', doc: 'NCCN Guidelines · Kidney Cancer', version: '版本未核实', original: false, page: '页码待核' },
-        { org: 'EAU', doc: 'EAU Guidelines on Renal Cell Carcinoma', version: '版本未核实', original: false, page: '页码待核' }
+        { org: 'CSCO', doc: 'CSCO《常见恶性肿瘤诊疗指南 2025》肾癌分册', version: '2025 版', original: false, secondaryUrl: 'https://www.pmphmall.com/gdsdetail/656290-335888', note: '二次来源：人卫智慧服务商城书目页，全文未核对', page: '页码待核' },
+        { org: 'NCCN', doc: 'NCCN Guidelines · Kidney Cancer', version: '版本未核实', original: false, secondaryUrl: 'https://www.nccn.org/guidelines/guidelines-detail?category=1&id=1440', note: '二次来源：NCCN 指南详情页（全文需免费注册）', page: '页码待核' },
+        { org: 'EAU', doc: 'EAU Guidelines on Renal Cell Carcinoma', version: '版本未核实', original: false, secondaryUrl: 'https://uroweb.org/guidelines/renal-cell-carcinoma', note: '二次来源：EAU 肾癌指南专题页', page: '页码待核' }
       ]
     },
     {
@@ -123,9 +123,9 @@ window.DISEASE_PRIMER = {
         'WHO / ISUP 分级：病理报告采用 1–4 级口径；本项目出处待核，版本未核实。'
       ],
       sources: [
-        { org: 'CSCO', doc: 'CSCO《常见恶性肿瘤诊疗指南 2025》肾癌分册', version: '2025 版', original: false, page: '页码待核' },
-        { org: 'AJCC', doc: 'Cancer Staging Manual, 8th ed.（肾章节）', version: '第 8 版（年份未核实）', original: false, page: '页码待核' },
-        { org: 'WHO / ISUP', doc: '泌尿系统肿瘤分类与病理分级', version: '版本未核实', original: false, page: '页码待核' }
+        { org: 'CSCO', doc: 'CSCO《常见恶性肿瘤诊疗指南 2025》肾癌分册', version: '2025 版', original: false, secondaryUrl: 'https://www.pmphmall.com/gdsdetail/656290-335888', note: '二次来源：人卫智慧服务商城书目页，全文未核对', page: '页码待核' },
+        { org: 'AJCC', doc: 'Cancer Staging Manual, 8th ed.（肾章节）', version: '第 8 版（年份未核实）', original: false, secondaryUrl: 'https://www.cancer.gov/types/kidney/hp/kidney-treatment-pdq', note: '二次来源：NCI PDQ 肾癌治疗综述（含分期口径）', page: '页码待核' },
+        { org: 'WHO / ISUP', doc: '泌尿系统肿瘤分类与病理分级', version: '版本未核实', original: false, secondaryUrl: 'https://publications.iarc.fr/Book-And-Report-Series/Who-Classification-Of-Tumours/Urinary-And-Male-Genital-Tumours-2022', note: '二次来源：IARC 书目页（第 5 版），全文未核对', page: '页码待核' }
       ]
     }
   ]

@@ -137,6 +137,19 @@ small{font-size:12px;color:var(--muted)}
 .hero .actions{margin-top:18px}
 .hero-mascot{width:144px;height:144px;border-radius:50%;background:#fff;border:4px solid #fff;display:grid;place-items:center;overflow:hidden}
 .hero-mascot img{width:124px;height:124px;object-fit:contain}
+/* 36 号 §2.6 · 看板首卡状态卡：卡头 eyebrow / 派生天数 / 现状行 / 出口按钮排（四件） */
+.stage-strip{display:flex;align-items:center;gap:14px;background:var(--violet-soft);border:1px solid var(--line);border-radius:13px;padding:13px 16px;margin-bottom:16px;flex-wrap:wrap}
+.stage-strip .eyebrow{flex:0 0 auto}
+.stage-strip b{font-size:13px;color:var(--violet-deep);font-weight:600;min-width:0;overflow-wrap:anywhere}
+.stage-strip small{margin-left:auto;flex:0 1 auto;min-width:0;overflow-wrap:anywhere}
+.stage-strip .stage-day{display:flex;flex-direction:column;gap:2px;min-width:0}
+.stage-strip .stage-day b{font-size:28px;line-height:1.05;color:var(--violet);font-weight:700}
+.stage-strip .stage-day small{margin-left:0;font-size:11px;color:var(--muted);flex:0 1 auto}
+.stage-strip .stage-now{display:flex;flex-direction:column;gap:2px;flex:1 1 260px;min-width:0}
+.stage-strip .stage-now small{margin-left:0;font-size:11px;color:var(--ink-2);flex:0 1 auto}
+.stage-strip[data-status-card="uninitialized"]{align-items:flex-start}
+.stage-strip .actions{margin-left:auto;flex:0 1 auto;display:flex;gap:8px;flex-wrap:wrap}
+.stage-strip .actions .soft{white-space:normal;text-align:left}
 .task-entry{text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px;display:grid;grid-template-columns:28px 1fr auto;grid-template-rows:auto auto;gap:3px 11px;align-items:center;transition:transform .18s,box-shadow .18s,border-color .18s}
 .task-entry:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:#ddd0f0;background:#fff}
 .task-entry .entry-icon{grid-column:1;grid-row:1/3;width:28px;height:28px;border-radius:8px;background:var(--violet-soft);color:var(--violet-deep);display:grid;place-items:center;font-size:13px}
