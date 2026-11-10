@@ -1,6 +1,6 @@
 {
   "name": "@xyb-community/kidney-workbench",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "面向肾癌患者与照护者的本机病程资料、分型与手术档案、肾功能趋势、主动监测、靶向与免疫治疗线序、副作用日常记录与复诊准备工作台设计项目",
   "private": true,
   "type": "module",
@@ -42,7 +42,7 @@
     "probe:primer": "node scripts/probe-disease-primer.mjs",
     "check:primer-links": "node scripts/check-primer-links.mjs",
     "audit": "node scripts/check-conformance.mjs .",
-    "check": "KID_CHANNEL=beta node scripts/build-version.mjs && node --disable-warning=ExperimentalWarning demo/build-demo-data.mjs && node scripts/build-client.mjs --check && node scripts/check-version.mjs && node scripts/check-syntax.mjs && node scripts/check-schema.mjs && node scripts/check-wording.mjs && node scripts/check-demo-columns.mjs && node --disable-warning=ExperimentalWarning --test test/*.test.mjs && node scripts/check-workbench-package.mjs . && node scripts/check-primer-links.mjs",
+    "check": "KID_CHANNEL=beta node scripts/build-version.mjs && node --disable-warning=ExperimentalWarning demo/build-demo-data.mjs && node scripts/build-client.mjs --check && node scripts/check-version.mjs && node scripts/check-syntax.mjs && node scripts/check-schema.mjs && node scripts/check-wording.mjs && node scripts/check-demo-columns.mjs && node --disable-warning=ExperimentalWarning --test test/*.test.mjs && node scripts/check-workbench-package.mjs . && node scripts/check-primer-links.mjs && node scripts/check-agent-pane-contract.mjs .",
     "release:check": "npm run check && npm run audit",
     "pack:check": "npm pack --dry-run",
     "probe:dev": "node --disable-warning=ExperimentalWarning scripts/probe-dev.mjs"
